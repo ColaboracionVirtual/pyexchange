@@ -277,7 +277,7 @@ def delete_folder(folder):
   return root
 
 
-def new_event(event):
+def new_event(event, delegate_for=None):
   """
   Requests a new event be created in the store.
 
@@ -329,8 +329,16 @@ def new_event(event):
     </m:Items>
 </m:CreateItem>
   """
-
-  id = T.DistinguishedFolderId(Id=event.calendar_id) if event.calendar_id in DISTINGUISHED_IDS else T.FolderId(Id=event.calendar_id)
+  if event.calendar_id in DISTINGUISHED_IDS:
+    if delegate_for is None:
+      id = T.DistinguishedFolderId(Id=event.calendar_id)
+    else:
+      id = T.DistinguishedFolderId(
+          {'Id': 'calendar'},
+          T.Mailbox(T.EmailAddress(delegate_for))
+        )
+  else:
+    id = T.FolderId(Id=event.calendar_id)
 
   start = convert_datetime_to_utc(event.start)
   end = convert_datetime_to_utc(event.end)

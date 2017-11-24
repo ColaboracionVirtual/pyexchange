@@ -245,7 +245,7 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
 
     super(Exchange2010CalendarEvent, self).validate()
 
-  def create(self):
+  def create(self, delegate_for=None):
     """
     Creates an event in Exchange. ::
 
@@ -259,7 +259,7 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
 
     """
     self.validate()
-    body = soap_request.new_event(self)
+    body = soap_request.new_event(self, delegate_for=delegate_for)
 
     response_xml = self.service.send(body)
     self._id, self._change_key = self._parse_id_and_change_key_from_response(response_xml)
