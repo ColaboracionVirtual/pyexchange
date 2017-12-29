@@ -17,13 +17,6 @@ log = logging.getLogger('pyexchange')
 class ExchangeBaseConnection(object):
   """ Base class for Exchange connections."""
 
-  def send(self, body, headers=None, retries=2, timeout=30, encoding="utf-8"):
-    raise NotImplementedError
-
-
-class ExchangeNTLMAuthConnection(ExchangeBaseConnection):
-  """ Connection to Exchange that uses NTLM authentication """
-
   def __init__(self, url, username, password, verify_certificate=True, **kwargs):
     self.url = url
     self.username = username
@@ -39,7 +32,7 @@ class ExchangeNTLMAuthConnection(ExchangeBaseConnection):
 
     log.debug(u'Constructing password manager')
 
-    self.password_manager = HttpNtlmAuth(self.username, self.password)
+    self.password_manager = requests.auth.HTTPBasicAuth(self.username, self.password)
 
     return self.password_manager
 
@@ -72,3 +65,17 @@ class ExchangeNTLMAuthConnection(ExchangeBaseConnection):
     log.debug(u'Got body: {body}'.format(body=response.text))
 
     return response.text
+
+
+class ExchangeNTLMAuthConnection(ExchangeBaseConnection):
+  """ Connection to Exchange that uses NTLM authentication """
+
+  def build_password_manager(self):
+    if self.password_manager:
+      return self.password_manager
+
+    log.debug(u'Constructing password manager')
+
+    self.password_manager = HttpNtlmAuth(self.username, self.password)
+
+    return self.password_manager
