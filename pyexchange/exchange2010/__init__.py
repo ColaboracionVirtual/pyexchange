@@ -536,6 +536,10 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
         u'xpath': u'//m:Items/t:CalendarItem/t:End',
         u'cast': u'datetime',
       },
+      u'timezone':
+      {
+        u'xpath': u'//m:Items/t:CalendarItem/t:TimeZone',
+      },
       u'html_body':
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:Body[@BodyType="HTML"]',
