@@ -45,7 +45,9 @@ class BaseExchangeCalendarEvent(object):
 
   subject = u''
   start = None
-  timezone = u''
+  timezone = u''  # timezone selected by the user
+  start_timezone_id = u''  # internal Exchange timezone name
+  end_timezone_id = u''
   end = None
   location = None
   html_body = None

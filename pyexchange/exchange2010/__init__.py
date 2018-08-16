@@ -540,6 +540,14 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:TimeZone',
       },
+      u'start_timezone_id':
+      {
+        u'xpath': u'//m:Items/t:CalendarItem/t:StartTimeZoneId',
+      },
+      u'end_timezone_id':
+      {
+        u'xpath': u'//m:Items/t:CalendarItem/t:EndTimeZoneId',
+      },
       u'html_body':
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:Body[@BodyType="HTML"]',
