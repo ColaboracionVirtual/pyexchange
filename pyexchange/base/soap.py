@@ -30,9 +30,10 @@ class ExchangeServiceSOAP(object):
 
   EXCHANGE_DATE_FORMAT = u"%Y-%m-%dT%H:%M:%SZ"
 
-  def __init__(self, connection, version=None):
+  def __init__(self, connection, version=None, check_errors=True):
     self.connection = connection
     self.version = version
+    self.is_check_errors = check_errors
 
   def send(self, xml, headers=None, retries=4, timeout=30, encoding="utf-8"):
     request_xml = self._wrap_soap_xml_request(xml)
@@ -47,7 +48,8 @@ class ExchangeServiceSOAP(object):
     except (etree.XMLSyntaxError, TypeError) as err:
       raise FailedExchangeException(u"Unable to parse response from Exchange - check your login information. Error: %s" % err)
 
-    self._check_for_errors(tree)
+    if self.is_check_errors:
+      self._check_for_errors(tree)
 
     log.info(etree.tostring(tree, encoding=encoding, pretty_print=True))
     return tree
