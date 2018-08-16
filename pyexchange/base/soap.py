@@ -14,9 +14,14 @@ from pytz import utc
 from ..exceptions import FailedExchangeException
 
 SOAP_NS = u'http://schemas.xmlsoap.org/soap/envelope/'
+MSG_NS = u'http://schemas.microsoft.com/exchange/services/2006/messages'
+TYPE_NS = u'http://schemas.microsoft.com/exchange/services/2006/types'
 
-SOAP_NAMESPACES = {u's': SOAP_NS}
-S = ElementMaker(namespace=SOAP_NS, nsmap=SOAP_NAMESPACES)
+NAMESPACES = {u'm': MSG_NS, u't': TYPE_NS, u's': SOAP_NS}
+
+S = ElementMaker(namespace=SOAP_NS, nsmap=NAMESPACES)
+M = ElementMaker(namespace=MSG_NS, nsmap=NAMESPACES)
+T = ElementMaker(namespace=TYPE_NS, nsmap=NAMESPACES)
 
 log = logging.getLogger('pyexchange')
 
@@ -25,8 +30,9 @@ class ExchangeServiceSOAP(object):
 
   EXCHANGE_DATE_FORMAT = u"%Y-%m-%dT%H:%M:%SZ"
 
-  def __init__(self, connection):
+  def __init__(self, connection, version=None):
     self.connection = connection
+    self.version = version
 
   def send(self, xml, headers=None, retries=4, timeout=30, encoding="utf-8"):
     request_xml = self._wrap_soap_xml_request(xml)
@@ -52,7 +58,7 @@ class ExchangeServiceSOAP(object):
   def _check_for_SOAP_fault(self, xml_tree):
     # Check for SOAP errors. if <soap:Fault> is anywhere in the response, flip out
 
-    fault_nodes = xml_tree.xpath(u'//s:Fault', namespaces=SOAP_NAMESPACES)
+    fault_nodes = xml_tree.xpath(u'//s:Fault', namespaces=NAMESPACES)
 
     if fault_nodes:
       fault = fault_nodes[0]
@@ -66,7 +72,11 @@ class ExchangeServiceSOAP(object):
     return response
 
   def _wrap_soap_xml_request(self, exchange_xml):
-    root = S.Envelope(S.Body(exchange_xml))
+    elements = []
+    if self.version:
+      elements.append(S.Header(T.RequestServerVersion(Version=self.version)))
+    elements.append(S.Body(exchange_xml))
+    root = S.Envelope(*elements)
     return root
 
   def _parse_date(self, date_string):
