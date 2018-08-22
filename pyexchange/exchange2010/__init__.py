@@ -9,7 +9,12 @@ import logging
 from ..base.calendar import BaseExchangeCalendarEvent, BaseExchangeCalendarService, ExchangeEventOrganizer, ExchangeEventResponse
 from ..base.folder import BaseExchangeFolder, BaseExchangeFolderService
 from ..base.soap import ExchangeServiceSOAP
-from ..exceptions import FailedExchangeException, ExchangeStaleChangeKeyException, ExchangeItemNotFoundException, ExchangeInternalServerTransientErrorException, ExchangeIrresolvableConflictException, InvalidEventType
+from ..exceptions import (
+  FailedExchangeException, ExchangeStaleChangeKeyException,
+  ExchangeItemNotFoundException, ExchangeInternalServerTransientErrorException,
+  ExchangeIrresolvableConflictException, InvalidEventType,
+  ExchangeInvalidWatermark,
+)
 from ..compat import BASESTRING_TYPES
 
 from . import soap_request
@@ -76,6 +81,8 @@ class Exchange2010Service(ExchangeServiceSOAP):
       elif code.text == u"ErrorCalendarOccurrenceIndexIsOutOfRecurrenceRange":
         # just means some or all of the requested instances are out of range
         pass
+      elif code.text == u"ErrorInvalidWatermark":
+        raise ExchangeInvalidWatermark(u"Exchange Fault (%s) from Exchange server" % code.text)
       elif code.text != u"NoError":
         raise FailedExchangeException(u"Exchange Fault (%s) from Exchange server" % code.text)
 
