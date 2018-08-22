@@ -178,7 +178,9 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
 
   def _init_from_service(self, id):
     log.debug(u'Creating new Exchange2010CalendarEvent object from ID')
-    body = soap_request.get_item(exchange_id=id, format=u'AllProperties')
+    body = soap_request.get_item(
+      exchange_id=id, format=u'AllProperties', version=self.service.version
+    )
     response_xml = self.service.send(body)
     properties = self._parse_response_for_get_event(response_xml)
 
@@ -496,6 +498,13 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
 
     result = self._parse_event_properties(response)
 
+    start_timezone_id = self._parse_start_timezone_id(response)
+    if start_timezone_id:
+      result[u'start_timezone_id'] = start_timezone_id
+    end_timezone_id = self._parse_end_timezone_id(response)
+    if end_timezone_id:
+      result[u'end_timezone_id'] = end_timezone_id
+
     organizer_properties = self._parse_event_organizer(response)
     if organizer_properties is not None:
       if 'email' not in organizer_properties:
@@ -539,14 +548,6 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
       u'timezone':
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:TimeZone',
-      },
-      u'start_timezone_id':
-      {
-        u'xpath': u'//m:Items/t:CalendarItem/t:StartTimeZoneId',
-      },
-      u'end_timezone_id':
-      {
-        u'xpath': u'//m:Items/t:CalendarItem/t:EndTimeZoneId',
       },
       u'html_body':
       {
@@ -608,6 +609,24 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
         result['recurrence'] = 'yearly'
 
     return result
+
+  def _parse_start_timezone_id(self, response):
+    elements = response.xpath(u'//m:Items/t:CalendarItem/t:StartTimeZoneId', namespaces=soap_request.NAMESPACES)
+    if elements:
+      return elements[0].text
+
+    elements = response.xpath(u'//m:Items/t:CalendarItem/t:StartTimeZone', namespaces=soap_request.NAMESPACES)
+    if elements:
+      return elements[0].attrib['Id']
+
+  def _parse_end_timezone_id(self, response):
+    elements = response.xpath(u'//m:Items/t:CalendarItem/t:EndTimeZoneId', namespaces=soap_request.NAMESPACES)
+    if elements:
+      return elements[0].text
+
+    elements = response.xpath(u'//m:Items/t:CalendarItem/t:EndTimeZone', namespaces=soap_request.NAMESPACES)
+    if elements:
+      return elements[0].attrib['Id']
 
   def _parse_event_organizer(self, response):
 

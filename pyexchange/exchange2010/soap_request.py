@@ -76,7 +76,7 @@ def delete_field(field_uri):
   return root
 
 
-def get_item(exchange_id, format=u"Default"):
+def get_item(exchange_id, format=u"Default", version=None):
   """
     Requests a calendar item from the store.
 
@@ -106,10 +106,18 @@ def get_item(exchange_id, format=u"Default"):
   else:
     elements = [T.ItemId(Id=exchange_id)]
 
+  item_shape = M.ItemShape(T.BaseShape(format))
+  if version and u'2010' in version:
+    # for Exchange2010 we need to request start and end timezones directly
+    item_shape.append(
+      T.AdditionalProperties(
+        T.FieldURI(FieldURI="calendar:StartTimeZone"),
+        T.FieldURI(FieldURI="calendar:EndTimeZone")
+      )
+    )
+
   root = M.GetItem(
-    M.ItemShape(
-      T.BaseShape(format)
-    ),
+    item_shape,
     M.ItemIds(
       *elements
     )
