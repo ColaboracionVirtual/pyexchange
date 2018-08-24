@@ -117,8 +117,7 @@ class Exchange2010CalendarEventList(object):
     self.details = details
     self.delegate_for = delegate_for
 
-    # This request uses a Calendar-specific query between two dates.
-    body = soap_request.get_calendar_items(format=u'AllProperties', calendar_id=calendar_id, start=self.start, end=self.end, delegate_for=self.delegate_for)
+    body = self._get_request_body(calendar_id)
     response_xml = self.service.send(body)
     self._parse_response_for_all_events(response_xml)
 
@@ -132,6 +131,16 @@ class Exchange2010CalendarEventList(object):
       log.debug(u'Received request for all details, retrieving now!')
       self.load_all_details()
     return
+
+  def _get_request_body(self, calendar_id):
+    # This request uses a Calendar-specific query between two dates.
+    body = soap_request.get_calendar_items(
+      format=u'AllProperties',
+      calendar_id=calendar_id,
+      start=self.start, end=self.end,
+      delegate_for=self.delegate_for
+    )
+    return body
 
   def _parse_response_for_all_events(self, response):
     """
@@ -179,6 +188,21 @@ class Exchange2010CalendarEventList(object):
       self._parse_response_for_all_events(response_xml)
 
     return self
+
+
+class Exchange2010CalendarEventChangeList(Exchange2010CalendarEventList):
+  """
+  Creates & Stores a list of Exchange2010CalendarEvent items changed or created
+  in the given period in the "self.events" variable.
+  """
+
+  def _get_request_body(self, calendar_id):
+    body = soap_request.get_calendar_changed_items(
+        calendar_id=calendar_id,
+        start=self.start, end=self.end,
+        delegate_for=self.delegate_for,
+    )
+    return body
 
 
 class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):

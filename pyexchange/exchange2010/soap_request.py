@@ -124,6 +124,7 @@ def get_item(exchange_id, format=u"Default", version=None):
   )
   return root
 
+
 def get_calendar_items(format=u"Default", calendar_id=u'calendar', start=None, end=None, max_entries=999999, delegate_for=None):
   start = start.strftime(EXCHANGE_DATETIME_FORMAT)
   end = end.strftime(EXCHANGE_DATETIME_FORMAT)
@@ -154,6 +155,65 @@ def get_calendar_items(format=u"Default", calendar_id=u'calendar', start=None, e
     target,
   )
 
+  return root
+
+
+def get_calendar_changed_items(format=u"IdOnly", calendar_id=u'calendar', start=None, end=None, delegate_for=None):
+  start = start.strftime(EXCHANGE_DATETIME_FORMAT)
+  end = end.strftime(EXCHANGE_DATETIME_FORMAT)
+
+  if calendar_id == u'calendar':
+    if delegate_for is None:
+      target = M.ParentFolderIds(T.DistinguishedFolderId(Id=calendar_id))
+    else:
+      target = M.ParentFolderIds(
+        T.DistinguishedFolderId(
+          {'Id': 'calendar'},
+          T.Mailbox(T.EmailAddress(delegate_for))
+        )
+      )
+  else:
+    target = M.ParentFolderIds(T.FolderId(Id=calendar_id))
+
+  root = M.FindItem(
+    {u'Traversal': u'Shallow'},
+    M.ItemShape(
+      T.BaseShape(format)
+    ),
+    M.Restriction(
+      T.Or(
+          T.And(
+              T.IsGreaterThanOrEqualTo(
+                  T.FieldURI(FieldURI="item:DateTimeCreated"),
+                  T.FieldURIOrConstant(
+                      T.Constant(Value=start),
+                  )
+              ),
+              T.IsLessThanOrEqualTo(
+                  T.FieldURI(FieldURI="item:DateTimeCreated"),
+                  T.FieldURIOrConstant(
+                      T.Constant(Value=end),
+                  )
+              )
+          ),
+          T.And(
+              T.IsGreaterThanOrEqualTo(
+                  T.FieldURI(FieldURI="item:LastModifiedTime"),
+                  T.FieldURIOrConstant(
+                      T.Constant(Value=start),
+                  )
+              ),
+              T.IsLessThanOrEqualTo(
+                  T.FieldURI(FieldURI="item:LastModifiedTime"),
+                  T.FieldURIOrConstant(
+                      T.Constant(Value=end),
+                  )
+              )
+          )
+      )
+    ),
+    target,
+  )
   return root
 
 
