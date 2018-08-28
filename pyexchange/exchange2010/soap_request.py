@@ -17,7 +17,8 @@ NAMESPACES = {u'm': MSG_NS, u't': TYPE_NS, u's': SOAP_NS}
 M = ElementMaker(namespace=MSG_NS, nsmap=NAMESPACES)
 T = ElementMaker(namespace=TYPE_NS, nsmap=NAMESPACES)
 
-EXCHANGE_DATETIME_FORMAT = u"%Y-%m-%dT%H:%M:%SZ"
+LOCAL_DATETIME_FORMAT = u"%Y-%m-%dT%H:%M:%S"  # without offset
+EXCHANGE_DATETIME_FORMAT = LOCAL_DATETIME_FORMAT + u"Z"
 EXCHANGE_DATE_FORMAT = u"%Y-%m-%d"
 
 DISTINGUISHED_IDS = (
@@ -363,6 +364,8 @@ def new_event(event, delegate_for=None):
             <t:Body BodyType="HTML">{event.subject}</t:Body>
             <t:Start></t:Start>
             <t:End></t:End>
+            <t:StartTimezone Id=""></t:StartTimezone>
+            <t:EndTimezone Id=""></t:EndTimezone>
             <t:Location></t:Location>
             <t:RequiredAttendees>
                 {% for attendee_email in meeting.required_attendees %}
@@ -408,9 +411,6 @@ def new_event(event, delegate_for=None):
   else:
     id = T.FolderId(Id=event.calendar_id)
 
-  start = convert_datetime_to_utc(event.start)
-  end = convert_datetime_to_utc(event.end)
-
   root = M.CreateItem(
     M.SavedItemFolderId(id),
     M.Items(
@@ -430,8 +430,19 @@ def new_event(event, delegate_for=None):
   else:
     calendar_node.append(T.ReminderIsSet('false'))
 
-  calendar_node.append(T.Start(start.strftime(EXCHANGE_DATETIME_FORMAT)))
-  calendar_node.append(T.End(end.strftime(EXCHANGE_DATETIME_FORMAT)))
+  if event.start_timezone_id:
+    start_str = event.start.strftime(LOCAL_DATETIME_FORMAT)
+  else:
+    start = convert_datetime_to_utc(event.start)
+    start_str = start.strftime(EXCHANGE_DATETIME_FORMAT)
+  calendar_node.append(T.Start(start_str))
+
+  if event.end_timezone_id:
+    end_str = event.end.strftime(LOCAL_DATETIME_FORMAT)
+  else:
+    end = convert_datetime_to_utc(event.end)
+    end_str = end.strftime(EXCHANGE_DATETIME_FORMAT)
+  calendar_node.append(T.End(end_str))
 
   if event.is_all_day:
     calendar_node.append(T.IsAllDayEvent('true'))
@@ -478,6 +489,12 @@ def new_event(event, delegate_for=None):
         )
       )
     )
+  # for Exchange2010 timezone fields should be in the end
+  if event.start_timezone_id:
+    calendar_node.append(T.StartTimeZone(Id=event.start_timezone_id))
+
+  if event.end_timezone_id:
+    calendar_node.append(T.EndTimeZone(Id=event.end_timezone_id))
 
   return root
 
@@ -586,18 +603,32 @@ def update_item(event, updated_attributes, calendar_item_update_operation_type):
       update_property_node(field_uri="item:Subject", node_to_insert=T.Subject(event.subject))
     )
 
-  if u'start' in updated_attributes:
-    start = convert_datetime_to_utc(event.start)
+  start_timezone_id = None
+  if u'start_timezone_id' in updated_attributes:
+    start_timezone_id = event.start_timezone_id
 
+  if u'start' in updated_attributes:
+    if start_timezone_id:
+      start_str = event.start.strftime(LOCAL_DATETIME_FORMAT)
+    else:
+      start = convert_datetime_to_utc(event.start)
+      start_str = start.strftime(EXCHANGE_DATETIME_FORMAT)
     update_node.append(
-      update_property_node(field_uri="calendar:Start", node_to_insert=T.Start(start.strftime(EXCHANGE_DATETIME_FORMAT)))
+      update_property_node(field_uri="calendar:Start", node_to_insert=T.Start(start_str))
     )
 
-  if u'end' in updated_attributes:
-    end = convert_datetime_to_utc(event.end)
+  end_timezone_id = None
+  if u'end_timezone_id' in updated_attributes:
+    end_timezone_id = event.end_timezone_id
 
+  if u'end' in updated_attributes:
+    if end_timezone_id:
+      end_str = event.end.strftime(LOCAL_DATETIME_FORMAT)
+    else:
+      end = convert_datetime_to_utc(event.end)
+      end_str = end.strftime(EXCHANGE_DATETIME_FORMAT)
     update_node.append(
-      update_property_node(field_uri="calendar:End", node_to_insert=T.End(end.strftime(EXCHANGE_DATETIME_FORMAT)))
+      update_property_node(field_uri="calendar:End", node_to_insert=T.End(end_str))
     )
 
   if u'location' in updated_attributes:
@@ -699,5 +730,18 @@ def update_item(event, updated_attributes, calendar_item_update_operation_type):
       update_node.append(
         update_property_node(field_uri="calendar:Recurrence", node_to_insert=recurrence_node)
       )
+
+    # for Exchange2010 timezone fields should be in the end
+    if start_timezone_id:
+      update_node.append(
+        update_property_node(
+          field_uri="calendar:StartTimeZone", node_to_insert=T.StartTimeZone(Id=event.start_timezone_id)
+        ))
+
+    if end_timezone_id:
+      update_node.append(
+        update_property_node(
+          field_uri="calendar:EndTimeZone", node_to_insert=T.EndTimeZone(Id=event.end_timezone_id)
+        ))
 
   return root
