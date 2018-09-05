@@ -731,17 +731,17 @@ def update_item(event, updated_attributes, calendar_item_update_operation_type):
         update_property_node(field_uri="calendar:Recurrence", node_to_insert=recurrence_node)
       )
 
-    # for Exchange2010 timezone fields should be in the end
-    if start_timezone_id:
-      update_node.append(
-        update_property_node(
-          field_uri="calendar:StartTimeZone", node_to_insert=T.StartTimeZone(Id=event.start_timezone_id)
-        ))
+  # for Exchange2010 timezone fields should be in the end
+  if start_timezone_id:
+    update_node.append(
+      update_property_node(
+        field_uri="calendar:StartTimeZone", node_to_insert=T.StartTimeZone(Id=event.start_timezone_id)
+      ))
 
-    if end_timezone_id:
-      update_node.append(
-        update_property_node(
-          field_uri="calendar:EndTimeZone", node_to_insert=T.EndTimeZone(Id=event.end_timezone_id)
-        ))
+  if end_timezone_id:
+    update_node.append(
+      update_property_node(
+        field_uri="calendar:EndTimeZone", node_to_insert=T.EndTimeZone(Id=event.end_timezone_id)
+      ))
 
   return root
