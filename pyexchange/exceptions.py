@@ -11,6 +11,11 @@ class FailedExchangeException(Exception):
   pass
 
 
+class ExchangeNotAvailableException(FailedExchangeException):
+  """Raised when the Microsoft Exchange Server returns 503 status code"""
+  pass
+
+
 class ExchangeInvalidIdMalformedException(FailedExchangeException):
   """Raised when we ask for an event key that doesn't exist."""
   pass

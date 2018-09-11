@@ -9,6 +9,7 @@ from requests_ntlm import HttpNtlmAuth
 
 import logging
 
+from pyexchange.exceptions import ExchangeNotAvailableException
 from .exceptions import FailedExchangeException
 
 log = logging.getLogger('pyexchange')
@@ -58,6 +59,8 @@ class ExchangeBaseConnection(object):
       response.raise_for_status()
     except requests.exceptions.RequestException as err:
       log.debug(err.response.content)
+      if err.response.status_code == 503:
+        raise ExchangeNotAvailableException(err)
       raise FailedExchangeException(u'Unable to connect to Exchange: %s' % err)
 
     log.info(u'Got response: {code}'.format(code=response.status_code))
