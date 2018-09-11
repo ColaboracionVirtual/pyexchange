@@ -101,6 +101,9 @@ class Exchange2010CalendarService(BaseExchangeCalendarService):
   def list_events(self, start=None, end=None, details=False, delegate_for=None):
     return Exchange2010CalendarEventList(service=self.service, calendar_id=self.calendar_id, start=start, end=end, details=details, delegate_for=delegate_for)
 
+  def list_changes(self, start=None, end=None, details=False, delegate_for=None):
+    return Exchange2010CalendarEventChangeList(service=self.service, calendar_id=self.calendar_id, start=start, end=end, details=details, delegate_for=delegate_for)
+
 
 class Exchange2010CalendarEventList(object):
   """
