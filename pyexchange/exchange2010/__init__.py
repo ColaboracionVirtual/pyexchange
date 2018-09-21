@@ -558,6 +558,9 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
   def _parse_event_properties(self, response):
 
     property_map = {
+      u'uid': {
+        u'xpath': u'//m:Items/t:CalendarItem/t:UID',
+      },
       u'subject': {
         u'xpath': u'//m:Items/t:CalendarItem/t:Subject',
       },

@@ -43,6 +43,7 @@ class BaseExchangeCalendarEvent(object):
   service = None
   calendar_id = None
 
+  uid = None
   subject = u''
   start = None
   timezone = u''  # timezone selected by the user
