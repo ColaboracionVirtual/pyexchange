@@ -608,6 +608,11 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
         u'xpath': u'//m:Items/t:CalendarItem/t:IsAllDayEvent',
         u'cast': u'bool',
       },
+      u'is_recurring':
+      {
+        u'xpath': u'//m:Items/t:CalendarItem/t:IsRecurring',
+        u'cast': u'bool',
+      },
       u'recurrence_end_date':
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:Recurrence/t:EndDateRecurrence/t:EndDate',

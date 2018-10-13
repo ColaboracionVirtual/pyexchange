@@ -58,6 +58,7 @@ class BaseExchangeCalendarEvent(object):
   reminder_minutes_before_start = None
   is_all_day = None
 
+  is_recurring = None
   recurrence = None
   recurrence_end_date = None
   recurrence_days = None
