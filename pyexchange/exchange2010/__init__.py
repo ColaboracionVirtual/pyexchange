@@ -6,6 +6,8 @@ Unless required by applicable law or agreed to in writing, software?distributed 
 """
 
 import logging
+
+from pyexchange.base.enums import CalendarItemType
 from ..base.calendar import BaseExchangeCalendarEvent, BaseExchangeCalendarService, ExchangeEventOrganizer, ExchangeEventResponse
 from ..base.folder import BaseExchangeFolder, BaseExchangeFolderService
 from ..base.soap import ExchangeServiceSOAP
@@ -80,6 +82,8 @@ class Exchange2010Service(ExchangeServiceSOAP):
         raise ExchangeInternalServerTransientErrorException(u"Exchange Fault (%s) from Exchange server" % code.text)
       elif code.text == u"ErrorCalendarOccurrenceIndexIsOutOfRecurrenceRange":
         # just means some or all of the requested instances are out of range
+        pass
+      elif code.text == u"ErrorCalendarOccurrenceIsDeletedFromRecurrence":
         pass
       elif code.text == u"ErrorInvalidWatermark":
         raise ExchangeInvalidWatermark(u"Exchange Fault (%s) from Exchange server" % code.text)
@@ -466,10 +470,17 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
     if not all([isinstance(i, int) for i in instance_index]):
       raise TypeError("instance_index must be an interable of type int")
 
-    if self.type != 'RecurringMaster':
-      raise InvalidEventType("get_occurrance method can only be called on a 'RecurringMaster' event type")
+    if self.type != CalendarItemType.RECURRING_MASTER:
+      raise InvalidEventType(
+        "get_occurrence method can only be called on a '%s' event type" %
+        CalendarItemType.RECURRING_MASTER
+      )
 
-    body = soap_request.get_occurrence(exchange_id=self._id, instance_index=instance_index, format=u"AllProperties")
+    body = soap_request.get_occurrence(
+      exchange_id=self._id,
+      instance_index=instance_index,
+      format=u"AllProperties",
+    )
     response_xml = self.service.send(body)
 
     items = response_xml.xpath(u'//m:GetItemResponseMessage/m:Items', namespaces=soap_request.NAMESPACES)
@@ -478,6 +489,42 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
       event = Exchange2010CalendarEvent(service=self.service, xml=deepcopy(item))
       if event.id:
         events.append(event)
+
+    return events
+
+  def get_all_occurrences(self, step=25, limit=100):
+    if self.type != CalendarItemType.RECURRING_MASTER:
+      raise InvalidEventType(
+        "get_all_occurrences method can only be called on a '%s' event type" %
+        CalendarItemType.RECURRING_MASTER
+      )
+
+    events = []
+    start_idx = 1
+    while start_idx <= limit:
+      body = soap_request.get_occurrence(
+        exchange_id=self._id,
+        instance_index=list(range(start_idx, start_idx + step)),
+        format=u"AllProperties",
+      )
+      start_idx += step
+      response_xml = self.service.send(body)
+      items = response_xml.xpath(
+        u'//m:GetItemResponseMessage/m:Items',
+        namespaces=soap_request.NAMESPACES,
+      )
+      for item in items:
+        if item.find('t:CalendarItem', namespaces=soap_request.NAMESPACES) is None:
+          continue
+        event = Exchange2010CalendarEvent(service=self.service, xml=deepcopy(item))
+        if event.id:
+          events.append(event)
+      to_stop = bool(response_xml.xpath(
+        u'//m:GetItemResponseMessage/m:ResponseCode['
+        u'text()="ErrorCalendarOccurrenceIndexIsOutOfRecurrenceRange"]',
+        namespaces=soap_request.NAMESPACES))
+      if to_stop:
+        break
 
     return events
 
