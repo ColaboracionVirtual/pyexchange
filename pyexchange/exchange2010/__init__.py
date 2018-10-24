@@ -223,7 +223,7 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
     properties = self._parse_response_for_get_event(response_xml)
 
     self._update_properties(properties)
-    self._id = id
+    self._id, self._change_key = self._parse_id_and_change_key_from_response(response_xml)
     log.debug(u'Created new event object with ID: %s' % self._id)
 
     self._reset_dirty_attributes()
