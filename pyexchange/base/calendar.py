@@ -63,6 +63,7 @@ class BaseExchangeCalendarEvent(object):
   recurrence_end_date = None
   recurrence_days = None
   recurrence_interval = None
+  recurrence_info = dict()
 
   _type = None
 

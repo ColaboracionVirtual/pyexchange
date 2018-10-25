@@ -7,7 +7,8 @@ Unless required by applicable law or agreed to in writing, software?distributed 
 
 import logging
 
-from pyexchange.base.enums import CalendarItemType
+from pyexchange.base.enums import RecurrencePattern, RecurrenceBoundary, \
+  CalendarItemType
 from ..base.calendar import BaseExchangeCalendarEvent, BaseExchangeCalendarService, ExchangeEventOrganizer, ExchangeEventResponse
 from ..base.folder import BaseExchangeFolder, BaseExchangeFolderService
 from ..base.soap import ExchangeServiceSOAP
@@ -676,26 +677,137 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
       },
     }
 
-    result = self.service._xpath_to_dict(element=response, property_map=property_map, namespace_map=soap_request.NAMESPACES)
+    namespaces = soap_request.NAMESPACES
+    result = self.service._xpath_to_dict(element=response, property_map=property_map, namespace_map=namespaces)
 
     try:
-      recurrence_node = response.xpath(u'//m:Items/t:CalendarItem/t:Recurrence', namespaces=soap_request.NAMESPACES)[0]
+      recurrence_node = response.xpath(u'//m:Items/t:CalendarItem/t:Recurrence', namespaces=namespaces)[0]
     except IndexError:
       recurrence_node = None
 
     if recurrence_node is not None:
 
-      if recurrence_node.find('t:DailyRecurrence', namespaces=soap_request.NAMESPACES) is not None:
+      if recurrence_node.find('t:DailyRecurrence', namespaces=namespaces) is not None:
         result['recurrence'] = 'daily'
-
-      elif recurrence_node.find('t:WeeklyRecurrence', namespaces=soap_request.NAMESPACES) is not None:
+      elif recurrence_node.find('t:WeeklyRecurrence', namespaces=namespaces) is not None:
         result['recurrence'] = 'weekly'
-
-      elif recurrence_node.find('t:AbsoluteMonthlyRecurrence', namespaces=soap_request.NAMESPACES) is not None:
+      elif recurrence_node.find('t:AbsoluteMonthlyRecurrence', namespaces=namespaces) is not None:
         result['recurrence'] = 'monthly'
-
-      elif recurrence_node.find('t:AbsoluteYearlyRecurrence', namespaces=soap_request.NAMESPACES) is not None:
+      elif recurrence_node.find('t:AbsoluteYearlyRecurrence', namespaces=namespaces) is not None:
         result['recurrence'] = 'yearly'
+
+      modified = {}
+      deleted = []
+      pattern = {}
+      boundary = {}
+      recurrence = dict(
+        modified=modified, deleted=deleted, pattern=pattern, boundary=boundary
+      )
+      result['recurrence_info'] = recurrence
+      for pattern_type, tag in RecurrencePattern.tags.items():
+        pattern_el = recurrence_node.find(tag, namespaces=namespaces)
+        if pattern_el is not None:
+          pattern['type'] = pattern_type
+
+          if pattern_type is RecurrencePattern.DAILY:
+            interval_el = pattern_el.find(u't:Interval', namespaces=namespaces)
+            if interval_el is not None:
+              pattern['interval'] = int(interval_el.text)
+          elif pattern_type is RecurrencePattern.WEEKLY:
+            interval_el = pattern_el.find(u't:Interval', namespaces=namespaces)
+            if interval_el is not None:
+              pattern['interval'] = int(interval_el.text)
+            days_of_week_el = pattern_el.find(u't:DaysOfWeek', namespaces=namespaces)
+            if days_of_week_el is not None:
+              pattern['days_of_week'] = days_of_week_el.text
+            first_day_of_week_el = pattern_el.find(u't:FirstDayOfWeek', namespaces=namespaces)
+            if first_day_of_week_el is not None:
+              pattern['first_day_of_week'] = first_day_of_week_el.text
+          elif pattern_type is RecurrencePattern.ABSOLUTE_MONTHLY:
+            interval_el = pattern_el.find(u't:Interval', namespaces=namespaces)
+            if interval_el is not None:
+              pattern['interval'] = int(interval_el.text)
+            day_of_month_el = pattern_el.find(u't:DayOfMonth', namespaces=namespaces)
+            if day_of_month_el is not None:
+              pattern['day_of_month'] = day_of_month_el.text
+          elif pattern_type is RecurrencePattern.RELATIVE_MONTHLY:
+            interval_el = pattern_el.find(u't:Interval', namespaces=namespaces)
+            if interval_el is not None:
+              pattern['interval'] = int(interval_el.text)
+            days_of_week_el = pattern_el.find(u't:DaysOfWeek', namespaces=namespaces)
+            if days_of_week_el is not None:
+              pattern['days_of_week'] = days_of_week_el.text
+            day_of_week_index_el = pattern_el.find(u't:DayOfWeekIndex', namespaces=namespaces)
+            if day_of_week_index_el is not None:
+              pattern['day_of_week_index'] = day_of_week_index_el.text
+          elif pattern_type is RecurrencePattern.ABSOLUTE_YEARLY:
+            day_of_month_el = pattern_el.find(u't:DayOfMonth', namespaces=namespaces)
+            if day_of_month_el is not None:
+              pattern['day_of_month'] = day_of_month_el.text
+            month_el = pattern_el.find(u't:Month', namespaces=namespaces)
+            if month_el is not None:
+              pattern['month'] = month_el.text
+          elif pattern_type is RecurrencePattern.RELATIVE_YEARLY:
+            days_of_week_el = pattern_el.find(u't:DaysOfWeek', namespaces=namespaces)
+            if days_of_week_el is not None:
+              pattern['days_of_week'] = days_of_week_el.text
+            day_of_week_index_el = pattern_el.find(u't:DayOfWeekIndex', namespaces=namespaces)
+            if day_of_week_index_el is not None:
+              pattern['day_of_week_index'] = day_of_week_index_el.text
+            month_el = pattern_el.find(u't:Month', namespaces=namespaces)
+            if month_el is not None:
+              pattern['month'] = month_el.text
+
+          break
+
+      for boundary_type, tag in RecurrenceBoundary.tags.items():
+        boundary_el = recurrence_node.find(tag, namespaces=namespaces)
+        if boundary_el is not None:
+          boundary['type'] = boundary_type
+          start_date_el = boundary_el.find(u't:StartDate', namespaces=namespaces)
+          if start_date_el is not None:
+            boundary['start_date'] = start_date_el.text
+
+          if boundary_type == RecurrenceBoundary.END_DATE:
+            end_date_el = boundary_el.find(u't:EndDate', namespaces=namespaces)
+            if end_date_el is not None:
+              boundary['end_date'] = end_date_el.text
+          elif boundary_type == RecurrenceBoundary.NUMBERED:
+            occurrences_number_el = boundary_el.find(u't:NumberOfOccurrences', namespaces=namespaces)
+            if occurrences_number_el is not None:
+              boundary['occurrences_number'] = int(occurrences_number_el.text)
+          elif boundary_type == RecurrenceBoundary.NO_END:
+            pass
+
+          break
+
+      try:
+        modified_occurrences_node = response.xpath(u'//m:Items/t:CalendarItem/t:ModifiedOccurrences', namespaces=namespaces)[0]
+      except IndexError:
+        modified_occurrences_node = None
+
+      if modified_occurrences_node is not None:
+        occurrences = modified_occurrences_node.findall(u't:Occurrence', namespaces=namespaces)
+        for occurrence in occurrences:
+          item_el = occurrence.find(u't:ItemId', namespaces=namespaces)
+          if item_el is not None:
+            item_id = item_el.get('Id')
+            start_el = occurrence.find(u't:Start', namespaces=namespaces)
+            end_el = occurrence.find(u't:End', namespaces=namespaces)
+            data = dict(start=start_el.text, end=end_el.text)
+            modified[item_id] = data
+
+      try:
+        deleted_occurrences_node = response.xpath(u'//m:Items/t:CalendarItem/t:DeletedOccurrences', namespaces=namespaces)[0]
+      except IndexError:
+        deleted_occurrences_node = None
+
+      if deleted_occurrences_node is not None:
+        occurrences = deleted_occurrences_node.findall(u't:DeletedOccurrence', namespaces=namespaces)
+        for occurrence in occurrences:
+          start_el = occurrence.find(u't:Start', namespaces=namespaces)
+          if start_el is not None:
+            deleted.append(start_el.text)
 
     return result
 
