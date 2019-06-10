@@ -10,6 +10,15 @@ class CalendarItemType(object):
     occurrences = (OCCURRENCE, EXCEPTION)
 
 
+class MeetingResponseType:
+    UNKNOWN = 'Unknown'
+    ORGANIZER = 'Organizer'
+    TENTATIVE = 'Tentative'
+    ACCEPT = 'Accept'
+    DECLINE = 'Decline'
+    NO_RESPONSE_RECEIVED = 'NoResponseReceived'
+
+
 class RecurrencePattern(object):
     ABSOLUTE_YEARLY = u'AbsoluteYearly'
     RELATIVE_YEARLY = u'RelativeYearly'

@@ -51,6 +51,7 @@ class BaseExchangeCalendarEvent(object):
   end_timezone_id = u''
   end = None
   location = None
+  response_type = None
   html_body = None
   text_body = None
   attachments = None
@@ -84,6 +85,7 @@ class BaseExchangeCalendarEvent(object):
     'html_body',
     'is_all_day',
     'location',
+    'response_type',
     'organizer',
     'recurrence',
     'recurrence_days',

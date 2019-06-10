@@ -642,6 +642,10 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:Body[@BodyType="Text"]',
       },
+      u'response_type':
+      {
+        u'xpath': u'//m:Items/t:CalendarItem/t:MyResponseType',
+      },
       u'_type':
       {
         u'xpath': u'//m:Items/t:CalendarItem/t:CalendarItemType',
