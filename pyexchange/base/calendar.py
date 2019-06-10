@@ -77,14 +77,30 @@ class BaseExchangeCalendarEvent(object):
 
   # these attributes can be pickled, or output as JSON
   DATA_ATTRIBUTES = [
-    u'_id', u'subject', u'start', u'end', u'location', u'html_body', u'text_body', u'organizer',
-    u'_attendees', u'_resources', u'reminder_minutes_before_start', u'is_all_day',
-    'recurrence', 'recurrence_interval', 'recurrence_days', 'recurrence_day',
+    '_attendees',
+    '_id',
+    '_resources',
+    'end',
+    'html_body',
+    'is_all_day',
+    'location',
+    'organizer',
+    'recurrence',
+    'recurrence_days',
+    'recurrence_day',
+    'recurrence_interval',
+    'reminder_minutes_before_start',
+    'start',
+    'subject',
+    'text_body',
     'timezone',
   ]
 
   RECURRENCE_ATTRIBUTES = [
-    'recurrence', 'recurrence_end_date', 'recurrence_days', 'recurrence_interval',
+    'recurrence',
+    'recurrence_days',
+    'recurrence_end_date',
+    'recurrence_interval',
   ]
 
   WEEKLY_DAYS = [u'Sunday', u'Monday', u'Tuesday', u'Wednesday', u'Thursday', u'Friday', u'Saturday']
