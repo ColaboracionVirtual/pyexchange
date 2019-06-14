@@ -6,6 +6,8 @@ Unless required by applicable law or agreed to in writing, software?distributed 
 """
 from collections import namedtuple
 
+from pyexchange.base.enums import MeetingResponseType
+
 ExchangeEventOrganizer = namedtuple('ExchangeEventOrganizer', ['name', 'email'])
 ExchangeEventAttendee = namedtuple('ExchangeEventAttendee', ['name', 'email', 'required'])
 ExchangeEventResponse = namedtuple('ExchangeEventResponse', ['name', 'email', 'response', 'last_response', 'required'])
@@ -326,6 +328,10 @@ class BaseExchangeCalendarEvent(object):
     """ Alias to resources - Exchange calls 'em resources, but this is clearer"""
     if self.resources and len(self.resources) == 1:
       return self.resources[0]
+
+  @property
+  def is_tentative(self):
+    return self.response_type == MeetingResponseType.TENTATIVE
 
   def validate(self):
     """ Validates that all required fields are present """
