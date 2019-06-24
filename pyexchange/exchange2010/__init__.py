@@ -919,6 +919,9 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
       attendee_properties = self.service._xpath_to_dict(element=attendee, property_map=property_map, namespace_map=soap_request.NAMESPACES)
       attendee_properties[u'required'] = True
 
+      if u'response' not in attendee_properties:
+        attendee_properties[u'response'] = None
+
       if u'last_response' not in attendee_properties:
         attendee_properties[u'last_response'] = None
 
@@ -930,6 +933,9 @@ class Exchange2010CalendarEvent(BaseExchangeCalendarEvent):
     for attendee in optional_attendees:
       attendee_properties = self.service._xpath_to_dict(element=attendee, property_map=property_map, namespace_map=soap_request.NAMESPACES)
       attendee_properties[u'required'] = False
+
+      if u'response' not in attendee_properties:
+        attendee_properties[u'response'] = None
 
       if u'last_response' not in attendee_properties:
         attendee_properties[u'last_response'] = None
