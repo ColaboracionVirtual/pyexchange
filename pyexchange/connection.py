@@ -58,9 +58,10 @@ class ExchangeBaseConnection(object):
       response = self.session.post(self.url, data=body, headers=headers, verify = self.verify_certificate)
       response.raise_for_status()
     except requests.exceptions.RequestException as err:
-      log.debug(err.response.content)
-      if err.response.status_code == 503:
-        raise ExchangeNotAvailableException(err)
+      if err.response:
+        log.debug(err.response.content)
+        if err.response.status_code == 503:
+          raise ExchangeNotAvailableException(err)
       raise FailedExchangeException(u'Unable to connect to Exchange: %s' % err)
 
     log.info(u'Got response: {code}'.format(code=response.status_code))
