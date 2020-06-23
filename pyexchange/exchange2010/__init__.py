@@ -17,7 +17,7 @@ from ..exceptions import (
   ExchangeItemNotFoundException, ExchangeInternalServerTransientErrorException,
   ExchangeIrresolvableConflictException, InvalidEventType,
   ExchangeInvalidWatermark,
-  ExchangeNonExistentMailboxException)
+  ExchangeNonExistentMailboxException, ExchangeAccessDeniedException)
 from ..compat import BASESTRING_TYPES
 
 from . import soap_request
@@ -90,6 +90,8 @@ class Exchange2010Service(ExchangeServiceSOAP):
         raise ExchangeInvalidWatermark(u"Exchange Fault (%s) from Exchange server" % code.text)
       elif code.text == u"ErrorNonExistentMailbox":
         raise ExchangeNonExistentMailboxException(u"Exchange Fault (%s) from Exchange server" % code.text)
+      elif code.text == u"ErrorAccessDenied":
+        raise ExchangeAccessDeniedException(u"Exchange Fault (%s) from Exchange server" % code.text)
       elif code.text != u"NoError":
         raise FailedExchangeException(u"Exchange Fault (%s) from Exchange server" % code.text)
 
