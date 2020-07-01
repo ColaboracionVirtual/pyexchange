@@ -17,7 +17,8 @@ from ..exceptions import (
   ExchangeItemNotFoundException, ExchangeInternalServerTransientErrorException,
   ExchangeIrresolvableConflictException, InvalidEventType,
   ExchangeInvalidWatermark,
-  ExchangeNonExistentMailboxException, ExchangeAccessDeniedException)
+  ExchangeNonExistentMailboxException, ExchangeAccessDeniedException,
+  ExchangeFolderNotFoundException)
 from ..compat import BASESTRING_TYPES
 
 from . import soap_request
@@ -75,6 +76,8 @@ class Exchange2010Service(ExchangeServiceSOAP):
       elif code.text == u"ErrorItemNotFound":
         # exchange_invite_key wasn't found on the server
         raise ExchangeItemNotFoundException(u"Exchange Fault (%s) from Exchange server" % code.text)
+      elif code.text == u"ErrorFolderNotFound":
+        raise ExchangeFolderNotFoundException(u"Exchange Fault (%s) from Exchange server" % code.text)
       elif code.text == u"ErrorIrresolvableConflict":
         # tried to update an item with an old change key
         raise ExchangeIrresolvableConflictException(u"Exchange Fault (%s) from Exchange server" % code.text)

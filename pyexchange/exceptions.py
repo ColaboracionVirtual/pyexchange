@@ -34,6 +34,10 @@ class ExchangeItemNotFoundException(FailedExchangeException):
   pass
 
 
+class ExchangeFolderNotFoundException(FailedExchangeException):
+  pass
+
+
 class ExchangeIrresolvableConflictException(FailedExchangeException):
   """Raised when attempting to update an item that has changed since the the current change key was obtained."""
   pass
